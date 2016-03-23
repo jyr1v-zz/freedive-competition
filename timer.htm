@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<title>Freedive competition countdown</title>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<script type="text/javascript" src="lib/jquery.min.js"></script>
+		<script type="text/javascript" src="lib/jquery.timepicker.min.js"></script>
+		<script type="text/javascript" src="lib/jquery.flip.min.js"></script>
+		<script type="text/javascript" src="lib/lib.js"></script>
+		<link rel="stylesheet" type="text/css" href="timer.css" />  
+		<link rel="stylesheet" type="text/css" href="lib/jquery.timepicker.css" />  
+
+		<script>
+		$(document).ready(function() {
+			var starttime = new Date().getTime();
+			var interval  = 10;
+			var state     = 0;
+			var run       = false;
+			var countdown = ERROR;
+
+			// initialisations
+			$('#starttime').timepicker({'timeFormat': 'H:i', 'step': 1, 'forceRoundTime': true, 'scrollDefault': 'now'});
+			$('#starttime').timepicker('setTime', new Date());
+			$("#card").flip({trigger: 'manual'});
+
+			function officialtop() {
+				$("#countdown").slideUp();
+				$("#countup").slideDown();
+			};
+
+			function end() {
+				state = -1;
+				starttime.setMinutes(starttime.getMinutes() + interval);
+				$("#countup").slideUp();
+				$("#countdown").slideDown();
+			};
+			
+			var states = 
+			[
+				{trigger: 121, audio: "2min",      func: nullFunc},
+				{trigger: 91,  audio: "1min30sec", func: nullFunc},
+				{trigger: 61,  audio: "1min",      func: nullFunc},
+				{trigger: 31,  audio: "30sec",     func: nullFunc},
+				{trigger: 21,  audio: "20sec",     func: nullFunc},
+				{trigger: 11,  audio: "10sec",     func: nullFunc},
+				{trigger: 6,   audio: "5sec",      func: nullFunc},
+				{trigger: 0,   audio: null,        func: officialtop},
+				{trigger: -19, audio: "20sec",     func: nullFunc},
+				{trigger: -24, audio: "25sec",     func: nullFunc},
+				{trigger: -35, audio: null,        func: end}
+			];
+
+			function isAllowedStarttime(test) {
+				if ( test )
+				{
+					get("starttime").style.backgroundColor = "white";
+					return true;
+				}
+				get("starttime").style.backgroundColor = "red";
+				return false;
+			};
+
+			$('#starttime').on('changeTime', function() {
+				starttime = new Date();
+				starttime.setHours($(this).val().split(':')[0]);
+				starttime.setMinutes($(this).val().split(':')[1]);
+				starttime.setSeconds(0);
+				isAllowedStarttime( (starttime - new Date().getTime()) >= 120000 );
+			});
+			
+			$("#start").on( "click", function() {
+				if ( isAllowedStarttime( (starttime - new Date().getTime()) >= 120000 ) )
+				{
+					countdown = ERROR;
+					interval  = parseInt(get('interval').options[get('interval').selectedIndex].value);
+					state     = 0;
+					run       = true;
+					timer();
+					$("#card").flip(true);
+				}
+			});
+			
+			$("#countdown").on( "click", function() {
+				run = false;
+				$("#card").flip(false);
+			});
+			
+			function timer() 
+			{
+				function getTime(secs) {
+					if ( secs < 0 )
+						secs = -secs;
+					
+					sec   = secs % 60;
+					min   = Math.floor((secs % 3600) / 60);
+					hour  = Math.floor((secs % 86400) / 3600);
+					
+					if ( secs >= 3600 )
+						return ('0'+hour).slice(-2) + ":" + ('0'+min).slice(-2) + "'" + ('0'+sec).slice(-2);
+						
+					return min + "'" + ('0'+sec).slice(-2);
+				}
+				
+				function runFunc() {
+					newCountdown = Math.ceil((starttime-new Date().getTime())/1000); // in secs
+					
+					if ( newCountdown != countdown )
+					{
+						countdown = newCountdown;
+						get('countdown').innerHTML = getTime(countdown);
+						get('countup').innerHTML   = getTime(countdown);
+						
+						if ( countdown <= states[state]['trigger'] )
+						{
+							if ( states[state]['audio'] != null )
+								get(states[state]['audio']).play();
+							
+							states[state]['func']();
+							state++;
+						}
+						if ( (countdown % 60) == 0 )
+						{
+							var d = new Date();
+							get('time').innerHTML = d.getHours() + ":" + ('0' + d.getMinutes()).slice(-2);
+						}
+					}
+
+					if (run)
+						window.setTimeout(function() { runFunc(); }, 100);
+				};
+				window.setTimeout(function() { runFunc(); }, 100);
+			};
+		});
+		</script>
+	</head>
+	<body>
+		<div id="card">
+			<div class="front">
+				<div id="start" class="btn">Start</div>
+				<br>
+				<div class="form-style-2">	
+					<label for="starttime">
+						<span>Start time</span>
+						<input id="starttime" type="text" class="inputx-field"/>
+					</label>
+					<label for="interval">
+						<span>Interval</span>
+						<select id="interval" class="select-field">
+							<option value="3">3 minutes</option>
+							<option value="4">4 minutes</option>
+							<option value="5">5 minutes</option>
+							<option value="6">6 minutes</option>
+							<option value="7">7 minutes</option>
+							<option value="8">8 minutes</option>
+							<option value="9">9 minutes</option>
+							<option value="10" selected>10 minutes</option>
+							<option value="11">11 minutes</option>
+							<option value="12">12 minutes</option>
+						</select>
+					</label>
+				</div>				
+			</div>
+			<div class="back">
+				<div id="countup" class="countup">00'00</div>
+				<div id="countdown" class="countdown">00'00</div>
+				<div id="time" class="time">00'00</div>
+			</div>
+		</div>
+		
+		<audio id="2min"      src="audio/2min.wav"      preload="auto"></audio>
+		<audio id="1min30sec" src="audio/1min30sec.wav" preload="auto"></audio>
+		<audio id="1min"      src="audio/1min.wav"      preload="auto"></audio>
+		<audio id="30sec"     src="audio/30sec.wav"     preload="auto"></audio>
+		<audio id="20sec"     src="audio/20sec.wav"     preload="auto"></audio>
+		<audio id="10sec"     src="audio/10sec.wav"     preload="auto"></audio>
+		<audio id="5sec"      src="audio/countdown.wav" preload="auto"></audio>
+		<audio id="25sec"     src="audio/25sec.wav"     preload="auto"></audio>
+	</body>
+</html>
