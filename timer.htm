@@ -71,6 +71,8 @@
 			$("#start").on( "click", function() {
 				if ( isAllowedStarttime( (starttime - new Date().getTime()) >= 120000 ) )
 				{
+					var d = new Date();
+					get('time').innerHTML = d.getHours() + ":" + ('0' + d.getMinutes()).slice(-2);
 					countdown = ERROR;
 					interval  = parseInt(get('interval').options[get('interval').selectedIndex].value);
 					state     = 0;
@@ -81,6 +83,11 @@
 			});
 			
 			$("#countdown").on( "click", function() {
+				run = false;
+				$("#card").flip(false);
+			});
+			
+			$("#countup").on( "click", function() {
 				run = false;
 				$("#card").flip(false);
 			});
@@ -96,7 +103,7 @@
 					hour  = Math.floor((secs % 86400) / 3600);
 					
 					if ( secs >= 3600 )
-						return ('0'+hour).slice(-2) + ":" + ('0'+min).slice(-2) + "'" + ('0'+sec).slice(-2);
+						return hour + ":" + ('0'+min).slice(-2) + "'" + ('0'+sec).slice(-2);
 						
 					return min + "'" + ('0'+sec).slice(-2);
 				}
@@ -136,12 +143,10 @@
 	<body>
 		<div id="card">
 			<div class="front">
-				<div id="start" class="btn">Start</div>
-				<br>
 				<div class="form-style-2">	
 					<label for="starttime">
-						<span>Start time</span>
-						<input id="starttime" type="text" class="inputx-field"/>
+						<span>Starttime</span>
+						<input id="starttime" type="text" class="input-field"/>
 					</label>
 					<label for="interval">
 						<span>Interval</span>
@@ -158,6 +163,7 @@
 							<option value="12">12 minutes</option>
 						</select>
 					</label>
+					<div id="start" class="btn">Start</div>
 				</div>				
 			</div>
 			<div class="back">
